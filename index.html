@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Find the Treat</title>
+<meta name="description" content="Poppy the Ridgeback puppy can smell the treats hidden in the garden. Help her find them in as few sniffs as you can.">
+<script data-goatcounter="https://steffenhuck.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#3f3a4a;
+    --muted:#7d7690;
+    --paper:#fffdf7;
+    --sky:#dff3ff;
+    --lawn1:#86cf63;
+    --lawn2:#79c257;
+    --hedge:#4f9a3e;
+    --soil:#8b5a2b;
+    --poppy:#c98a45;
+    --poppy-dark:#8d5a24;
+    --accent:#ff7a59;
+    --s0:#bfd6ea;
+    --s1:#f6eaa0;
+    --s2:#fbc95a;
+    --s3:#f8923c;
+    --s4:#ea4d3a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    min-height:100vh; min-height:100dvh;
+    font-family:'Nunito',sans-serif;
+    color:var(--ink);
+    background:linear-gradient(170deg,#e7f6ff 0%,#fff6e4 55%,#eefbe6 100%);
+    display:flex; flex-direction:column; align-items:center;
+    overflow-x:hidden;
+    user-select:none; -webkit-user-select:none;
+  }
+  h1,h2,h3,.btn,.val,.chip{font-family:'Fredoka',sans-serif;}
+  button{font-family:inherit;}
+
+  /* ---------- overlays / cards ---------- */
+  .overlay{
+    position:fixed; inset:0; z-index:50;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    background:rgba(255,250,240,.86); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    padding:16px; overflow-y:auto;
+  }
+  .overlay > .card{margin:auto 0;}
+  .stack{margin:auto 0; width:100%; display:flex; flex-direction:column; align-items:center;}
+  .card{
+    background:var(--paper); border-radius:26px;
+    box-shadow:0 18px 50px rgba(100,80,60,.18);
+    padding:24px 22px 22px; max-width:420px; width:100%;
+    text-align:center;
+  }
+  .card h1{margin:4px 0 2px; font-size:38px; font-weight:700; line-height:1.05; letter-spacing:-.01em;}
+  .card h2{margin:4px 0 2px; font-size:30px; font-weight:600;}
+  .card p{font-size:16px; line-height:1.5; margin:10px 0;}
+  .card p.small{font-size:14px; color:var(--muted); margin:6px 0;}
+  .card .hero{width:150px; height:150px; margin:0 auto 2px;}
+  .btn{
+    font-size:20px; font-weight:600; color:#fff;
+    background:linear-gradient(135deg,#ffa23f,#ff6b4a);
+    border:none; border-radius:999px; padding:13px 34px; cursor:pointer;
+    box-shadow:0 8px 20px rgba(255,120,70,.35);
+    transition:transform .15s ease, box-shadow .15s ease;
+    margin:6px 4px 0;
+  }
+  .btn:active{transform:scale(.95);}
+  .btn.secondary{
+    background:#fff; color:var(--ink); box-shadow:0 4px 12px rgba(100,80,60,.14);
+    border:2px solid #eee4d4; font-size:17px; padding:10px 22px;
+  }
+  .btn.small{font-size:15px; padding:8px 18px;}
+
+  /* level picker */
+  .levels{display:flex; flex-direction:column; gap:10px; margin:14px 0 6px;}
+  .lvl{
+    display:flex; align-items:center; gap:14px; text-align:left;
+    background:#fff; border:2px solid #efe6d6; border-radius:18px; padding:12px 14px;
+    cursor:pointer; transition:transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .lvl:hover,.lvl:focus-visible{border-color:var(--accent); background:#fff8f2; outline:none;}
+  .lvl:active{transform:scale(.98);}
+  .lvl .badge{
+    width:54px; height:54px; border-radius:16px; flex:0 0 54px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:22px; color:#fff;
+  }
+  .lvl.easy .badge{background:linear-gradient(135deg,#8ad46a,#4fae57);}
+  .lvl.medium .badge{background:linear-gradient(135deg,#ffc24f,#ff8f3b);}
+  .lvl.hard .badge{background:linear-gradient(135deg,#ff6f6f,#c23a6a);}
+  .lvl .name{font-family:'Fredoka',sans-serif; font-size:20px; font-weight:600; display:block; line-height:1.1;}
+  .lvl .what{font-size:13.5px; color:var(--muted); display:block; margin-top:3px; line-height:1.35;}
+
+  .toggle{
+    display:inline-flex; background:#f1ebe0; border-radius:999px; padding:4px; margin:10px 0 2px;
+  }
+  .toggle button{
+    border:none; background:transparent; border-radius:999px; padding:7px 14px;
+    font-family:'Fredoka',sans-serif; font-size:15px; color:var(--muted); cursor:pointer;
+  }
+  .toggle button.on{background:#fff; color:var(--ink); box-shadow:0 2px 8px rgba(100,80,60,.15);}
+
+  .dedication{
+    font-family:'Fredoka',sans-serif; font-weight:500; font-size:19px;
+    margin:22px 0 0; color:var(--ink);
+  }
+  .dedication b{color:var(--accent); font-weight:600;}
+  .dedication + .small{margin-top:4px;}
+
+  /* ---------- game ---------- */
+  #game{
+    display:none; flex-direction:column; align-items:center;
+    width:100%; max-width:460px; padding:10px 12px 6px;
+  }
+  #top{
+    width:100%; display:flex; justify-content:space-between; align-items:center;
+    padding:2px 4px 8px; gap:8px;
+  }
+  #top .title{font-family:'Fredoka',sans-serif; font-size:18px; font-weight:600; line-height:1; min-width:0;}
+  #top .title small{display:block; font-family:'Nunito',sans-serif; font-weight:600; font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .chips{display:flex; gap:6px; align-items:center;}
+  .chip{
+    background:#fff; border-radius:999px; padding:5px 10px; font-size:14px; font-weight:600;
+    box-shadow:0 3px 10px rgba(100,80,60,.12); display:flex; align-items:center; gap:5px; white-space:nowrap;
+  }
+  .chip svg{width:16px; height:16px;}
+  .chip.warn{background:#ffe6dd; color:#c9402a;}
+
+  #gardenWrap{
+    position:relative; width:100%;
+    background:var(--hedge);
+    border-radius:22px; padding:10px;
+    box-shadow:0 14px 34px rgba(60,90,40,.25), inset 0 0 0 4px #5fae4a;
+  }
+  #garden{
+    display:grid; gap:3px; width:100%; aspect-ratio:1/1;
+    position:relative;
+  }
+  .tile{
+    position:relative; border:none; border-radius:16%; padding:0; cursor:pointer;
+    background:var(--lawn1); overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fredoka',sans-serif; font-weight:700; color:var(--ink);
+    transition:background .25s ease, transform .12s ease;
+    touch-action:manipulation;
+  }
+  .tile.alt{background:var(--lawn2);}
+  .tile:active{transform:scale(.92);}
+  .tile .deco{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; opacity:.95;}
+  .tile.read{box-shadow:inset 0 0 0 2px rgba(255,255,255,.55);}
+  .tile.read .deco{opacity:.18;}
+  .tile.s0{background:var(--s0);} .tile.s1{background:var(--s1);} .tile.s2{background:var(--s2);}
+  .tile.s3{background:var(--s3);} .tile.s4{background:var(--s4);}
+  .tile.found{background:#ffe9a6; box-shadow:inset 0 0 0 3px #ffbf47;}
+  .tile.reveal{background:#ffe9a6; animation:pulse 1.2s ease-in-out 2;}
+  .tile .item{position:absolute; inset:12%; width:76%; height:76%; z-index:3; pointer-events:none;}
+  .tile.focusable:focus-visible{outline:3px solid #fff; outline-offset:-3px;}
+  @keyframes pulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
+
+  /* Poppy sprite */
+  #poppy{
+    position:absolute; z-index:20; pointer-events:none;
+    width:60px; height:60px; left:0; top:0;
+    transition:transform .55s cubic-bezier(.3,.9,.4,1.05);
+    filter:drop-shadow(0 3px 3px rgba(40,60,20,.3));
+  }
+  #poppy svg{width:100%; height:100%; overflow:visible;}
+  #poppy .rot{transition:transform .35s ease; transform-origin:50% 50%;}
+  #poppy.sniffing .head{animation:sniff .22s ease-in-out 4;}
+  #poppy.happy .body{animation:wag .18s ease-in-out 6;}
+  #poppy.happy .tail{animation:tailwag .14s ease-in-out 8;}
+  #poppy.sleepy{opacity:.75;}
+  @keyframes sniff{0%,100%{transform:translateY(0) scale(1);} 50%{transform:translateY(-3px) scale(1.06);}}
+  @keyframes wag{0%,100%{transform:rotate(-4deg);} 50%{transform:rotate(4deg);}}
+  @keyframes tailwag{0%,100%{transform:rotate(-22deg);} 50%{transform:rotate(22deg);}}
+  .head{transform-origin:50px 32px;}
+  .body{transform-origin:50px 55px;}
+  .tail{transform-origin:50px 86px;}
+
+  /* speech bubble */
+  #bubble{
+    width:100%; margin-top:12px; display:flex; gap:10px; align-items:flex-start;
+  }
+  #bubble .face{width:46px; height:46px; flex:0 0 46px; border-radius:50%; background:#fff; box-shadow:0 4px 12px rgba(100,80,60,.15); overflow:hidden;}
+  #bubble .face svg{width:100%; height:100%;}
+  #bubble .text{
+    flex:1; background:#fff; border-radius:16px; padding:10px 14px; font-size:15.5px; line-height:1.4;
+    box-shadow:0 4px 12px rgba(100,80,60,.12); position:relative; min-height:46px; display:block;
+  }
+  #bubble .text:before{
+    content:""; position:absolute; left:-7px; top:16px; width:14px; height:14px; background:#fff; transform:rotate(45deg); border-radius:3px;
+  }
+  #bubble .text b{color:var(--accent);}
+
+  /* legend */
+  #legend{
+    width:100%; margin-top:10px; display:flex; align-items:stretch; justify-content:center; gap:3px;
+  }
+  #legend .sw{
+    flex:1 1 0; max-width:76px; border-radius:8px; padding:5px 2px 4px; text-align:center;
+    font-family:'Fredoka',sans-serif; font-weight:600; font-size:11px; color:var(--ink); line-height:1.1;
+  }
+  #legend .s0{background:var(--s0);} #legend .s1{background:var(--s1);} #legend .s2{background:var(--s2);}
+  #legend .s3{background:var(--s3);} #legend .s4{background:var(--s4); color:#fff;}
+
+  #controls{width:100%; display:flex; justify-content:center; gap:8px; margin:12px 0 4px; flex-wrap:wrap;}
+
+  /* nose panel */
+  .nosegrid{display:grid; gap:3px; width:min(240px,70vw); margin:8px auto 2px;}
+  .nosegrid span{
+    aspect-ratio:1/1; border-radius:4px; display:flex; align-items:center; justify-content:center;
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:11px; color:var(--ink);
+  }
+  .nosegrid span.center{background:#ffe9a6; box-shadow:inset 0 0 0 2px #ffbf47;}
+  .nosegrid span.s0{background:var(--s0);} .nosegrid span.s1{background:var(--s1);} .nosegrid span.s2{background:var(--s2);}
+  .nosegrid span.s3{background:var(--s3);} .nosegrid span.s4{background:var(--s4);}
+  .nosegrid span.center svg{width:80%; height:80%;}
+  .rules{text-align:left; font-size:15px; line-height:1.5; margin:12px 0 0; padding-left:0; list-style:none;}
+  .rules li{margin:6px 0; padding-left:28px; position:relative;}
+  .rules li:before{content:"🐾"; position:absolute; left:0; top:0;}
+  .noselegend{display:flex; justify-content:center; gap:4px; margin:8px 0 0; flex-wrap:wrap;}
+  .noselegend span{border-radius:8px; padding:4px 8px; font-family:'Fredoka',sans-serif; font-weight:600; font-size:12px; color:var(--ink);}
+  .noselegend .s0{background:var(--s0);} .noselegend .s1{background:var(--s1);} .noselegend .s2{background:var(--s2);}
+  .noselegend .s3{background:var(--s3);} .noselegend .s4{background:var(--s4); color:#fff;}
+
+  /* floaters */
+  .float{
+    position:absolute; z-index:30; pointer-events:none;
+    font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; color:#fff;
+    text-shadow:0 2px 6px rgba(0,0,0,.35);
+    transform:translate(-50%,-50%);
+    animation:rise 1.1s ease-out forwards; white-space:nowrap;
+  }
+  @keyframes rise{0%{opacity:0; margin-top:0;} 15%{opacity:1;} 100%{opacity:0; margin-top:-60px;}}
+  .sparkle{position:absolute; pointer-events:none; z-index:28; animation:spark 1.8s ease-in-out forwards; font-size:18px;}
+  @keyframes spark{0%{opacity:0; transform:translateY(8px) scale(.5);} 25%{opacity:1;} 100%{opacity:0; transform:translateY(-70px) scale(1.15) rotate(25deg);}}
+  .confetti{position:fixed; top:-12px; z-index:60; width:10px; height:16px; border-radius:2px; pointer-events:none; animation:fall linear forwards;}
+  @keyframes fall{0%{transform:translateY(0) rotate(0);} 100%{transform:translateY(110vh) rotate(720deg);}}
+
+  .stars{font-size:34px; letter-spacing:.08em; margin:4px 0 0;}
+  .stars .off{opacity:.25;}
+
+  @media (prefers-reduced-motion: reduce){
+    .float,.sparkle,.confetti{animation:none; opacity:0;}
+    #poppy,#poppy .rot{transition:none;}
+    #poppy.sniffing .head,#poppy.happy .body,#poppy.happy .tail{animation:none;}
+  }
+
+  footer{padding:18px 0 22px; font-size:14px;}
+  footer a{color:var(--ink); font-style:italic; text-decoration:none; opacity:.6;}
+  footer a:hover{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ===== Poppy artwork (reused) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- top-down Poppy, facing up -->
+    <!-- Poppy face for the speech bubble -->
+    <g id="poppyFace">
+      <ellipse cx="22" cy="52" rx="13" ry="18" fill="#9c6128" transform="rotate(14 22 52)"/>
+      <ellipse cx="78" cy="52" rx="13" ry="18" fill="#9c6128" transform="rotate(-14 78 52)"/>
+      <ellipse cx="50" cy="52" rx="30" ry="32" fill="#c98a45"/>
+      <ellipse cx="50" cy="66" rx="17" ry="14" fill="#5a3b1e"/>
+      <ellipse cx="50" cy="60" rx="8" ry="6" fill="#1d1612"/>
+      <ellipse cx="47.5" cy="58.5" rx="2" ry="1.2" fill="#fff" opacity=".6"/>
+      <circle cx="38" cy="44" r="4" fill="#1d1612"/><circle cx="62" cy="44" r="4" fill="#1d1612"/>
+      <circle cx="39.5" cy="42.8" r="1.3" fill="#fff"/><circle cx="63.5" cy="42.8" r="1.3" fill="#fff"/>
+      <path d="M42 75 Q50 81 58 75" fill="none" stroke="#1d1612" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+    <!-- treat (a biscuit bone) -->
+    <g id="treat">
+      <path d="M22 36 a10 10 0 1 1 10 -14 l36 0 a10 10 0 1 1 10 14 a10 10 0 1 1 -10 14 l-36 0 a10 10 0 1 1 -10 -14 z" fill="#e8b36a" stroke="#a9742f" stroke-width="4" stroke-linejoin="round"/>
+      <circle cx="40" cy="50" r="2.5" fill="#a9742f"/><circle cx="50" cy="50" r="2.5" fill="#a9742f"/><circle cx="60" cy="50" r="2.5" fill="#a9742f"/>
+    </g>
+    <!-- daisy / flower decoration -->
+    <g id="daisy">
+      <g fill="#fff">
+        <ellipse cx="50" cy="38" rx="6" ry="11"/><ellipse cx="50" cy="62" rx="6" ry="11"/>
+        <ellipse cx="38" cy="50" rx="11" ry="6"/><ellipse cx="62" cy="50" rx="11" ry="6"/>
+        <ellipse cx="41" cy="41" rx="6" ry="10" transform="rotate(-45 41 41)"/><ellipse cx="59" cy="59" rx="6" ry="10" transform="rotate(-45 59 59)"/>
+        <ellipse cx="59" cy="41" rx="6" ry="10" transform="rotate(45 59 41)"/><ellipse cx="41" cy="59" rx="6" ry="10" transform="rotate(45 41 59)"/>
+      </g>
+      <circle cx="50" cy="50" r="8" fill="#ffd43b"/>
+    </g>
+    <g id="tulip">
+      <path d="M50 92 V56" stroke="#4f9a3e" stroke-width="5" stroke-linecap="round"/>
+      <path d="M50 72 q-14 -2 -16 -16 q12 2 16 16 z" fill="#4f9a3e"/>
+      <path d="M36 44 q0 -22 14 -22 q14 0 14 22 q0 14 -14 14 q-14 0 -14 -14 z" fill="#ff7a9e"/>
+      <path d="M36 44 l5 -16 l9 8 l9 -8 l5 16" fill="none" stroke="#ff9fb8" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+    <g id="mushroom">
+      <rect x="43" y="52" width="14" height="30" rx="6" fill="#f3e9d2"/>
+      <path d="M26 56 q24 -44 48 0 z" fill="#e85d4a"/>
+      <circle cx="40" cy="42" r="4" fill="#fff"/><circle cx="54" cy="34" r="3" fill="#fff"/><circle cx="60" cy="48" r="3.5" fill="#fff"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ===== landing ===== -->
+<div class="overlay" id="landing">
+  <div class="stack">
+  <div class="card">
+    <svg class="hero" viewBox="0 0 100 100" aria-hidden="true"><use href="#poppyFace"/></svg>
+    <h1>Find the Treat</h1>
+    <p>Treats are hidden in the garden. <b>Poppy</b> can't see them, but she can <b>smell</b> them.</p>
+    <p>Tap a spot. Poppy runs there and sniffs, and the spot takes the colour of her nose: <span style="color:#6a8fb5;font-weight:700">blue</span> for cold, <span style="color:#d9a21b;font-weight:700">yellow</span> for faint and warm, <span style="color:#e4762a;font-weight:700">orange</span> for warmer, <span style="color:#ea4d3a;font-weight:700">red</span> for hot: the treat is on one of the eight squares touching hers. Find every treat before she gets tired!</p>
+
+    <div class="levels">
+      <button class="lvl easy" data-level="easy">
+        <span class="badge">1</span>
+        <span><span class="name">Puppy</span><span class="what">Small garden, one treat, 12 sniffs.</span></span>
+      </button>
+      <button class="lvl medium" data-level="medium">
+        <span class="badge">2</span>
+        <span><span class="name">Young Dog</span><span class="what">Bigger garden, two treats, 16 sniffs.</span></span>
+      </button>
+      <button class="lvl hard" data-level="hard">
+        <span class="badge">3</span>
+        <span><span class="name">Top Dog</span><span class="what">Big garden, three treats, only 18 sniffs. Every sniff has to count.</span></span>
+      </button>
+    </div>
+
+    <div class="toggle" id="modeToggle">
+      <button class="on" data-mode="daily">Today's garden</button>
+      <button data-mode="random">Random garden</button>
+    </div>
+    <p class="small" id="modeNote">Today's garden is the same for everyone. Compare sniffs with a friend.</p>
+
+    <button class="btn secondary small" id="noseBtn1">How Poppy's nose works</button>
+
+    <p class="dedication">For <b>Poppy</b>, who arrives in December</p>
+    <p class="small">A Rhodesian Ridgeback. Her nose is better than yours.</p>
+  </div>
+  <footer><a href="https://steffenhuck.github.io/">steffen huck</a></footer>
+  </div>
+</div>
+
+<!-- ===== nose science ===== -->
+<div class="overlay" id="nosePanel" style="display:none;">
+  <div class="card">
+    <h2>How Poppy's nose works</h2>
+    <p>The same rule on every level. Around a treat, the garden smells like this:</p>
+    <div class="nosegrid" id="noseGrid"></div>
+    <div class="noselegend"><span class="s4">hot</span><span class="s3">warmer</span><span class="s2">warm</span><span class="s1">faint</span><span class="s0">cold</span></div>
+    <p class="small">Red (hot): the treat is on one of the 8 squares touching Poppy's, diagonals included. Orange (warmer): two squares away. Yellow (warm): three. Pale yellow (faint): four. Blue (cold): nothing within four squares. Distances are as the crow flies, so the bands are rings, not boxes.</p>
+    <ul class="rules">
+      <li>Every sniff is one tap. The colour stays on the square, so you can think.</li>
+      <li>With more than one treat, Poppy's nose goes by the <b>nearest</b> one.</li>
+      <li>Colours never change. Each one shows the nearest treat <i>at the time of the sniff</i>. So once Poppy has eaten a treat, a colour near it may have been about that one, about another treat, or both.</li>
+      <li>Tapping the square with the treat finds it.</li>
+    </ul>
+    <button class="btn" id="noseClose">Got it</button>
+  </div>
+</div>
+
+<!-- ===== ending ===== -->
+<div class="overlay" id="ending" style="display:none;">
+  <div class="card">
+    <svg class="hero" viewBox="0 0 100 100" aria-hidden="true" id="endFace"><use href="#poppyFace"/></svg>
+    <h2 id="endTitle">Poppy found all the treats!</h2>
+    <div class="stars" id="endStars"></div>
+    <p id="endStats"></p>
+    <p class="small" id="endGarden"></p>
+    <div>
+      <button class="btn" id="againBtn">Play again</button>
+      <button class="btn secondary" id="nextBtn">Next level</button>
+    </div>
+    <div>
+      <button class="btn secondary small" id="shareBtn">Share</button>
+      <button class="btn secondary small" id="peekBtn">Peek at the garden</button>
+      <button class="btn secondary small" id="menuBtn">All levels</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== game ===== -->
+<div id="game">
+  <div id="top">
+    <div class="title">Find the Treat<small id="levelName">Puppy</small></div>
+    <div class="chips">
+      <div class="chip" id="treatChip" title="treats found"><svg viewBox="0 0 100 100"><use href="#treat"/></svg><span class="val" id="treatsVal">0/1</span></div>
+      <div class="chip" id="sniffChip" title="sniffs left">👃 <span class="val" id="sniffsVal">12</span></div>
+    </div>
+  </div>
+  <div id="gardenWrap">
+    <div id="garden" aria-label="the garden"></div>
+    <div id="poppy"><svg viewBox="0 0 100 100">
+      <g class="rot">
+        <g class="tail"><path d="M50 84 C 50 94, 60 96, 66 90" fill="none" stroke="#b5762e" stroke-width="7" stroke-linecap="round"/></g>
+        <!-- paws -->
+        <g fill="#b5762e">
+          <ellipse cx="30" cy="40" rx="6" ry="8"/><ellipse cx="70" cy="40" rx="6" ry="8"/>
+          <ellipse cx="32" cy="76" rx="6" ry="8"/><ellipse cx="68" cy="76" rx="6" ry="8"/>
+        </g>
+        <g class="body">
+          <ellipse cx="50" cy="58" rx="19" ry="30" fill="#c98a45"/>
+          <!-- the ridge: two whorls at the shoulders, tapering to the hips -->
+          <path d="M44 36 C 42 34, 46 31, 48 34 C 50 31, 54 32, 56 36 C 54 52, 52 68, 50 80 C 48 68, 46 52, 44 36 Z" fill="#8d5a24"/>
+          <circle cx="45" cy="34" r="2.2" fill="#8d5a24"/><circle cx="55" cy="34" r="2.2" fill="#8d5a24"/>
+        </g>
+        <g class="head">
+          <!-- ears -->
+          <ellipse cx="33" cy="30" rx="8" ry="13" fill="#9c6128" transform="rotate(18 33 30)"/>
+          <ellipse cx="67" cy="30" rx="8" ry="13" fill="#9c6128" transform="rotate(-18 67 30)"/>
+          <!-- head -->
+          <ellipse cx="50" cy="28" rx="16" ry="17" fill="#c98a45"/>
+          <!-- dark muzzle -->
+          <ellipse cx="50" cy="14" rx="9" ry="8" fill="#5a3b1e"/>
+          <!-- nose -->
+          <ellipse cx="50" cy="9" rx="5" ry="3.6" fill="#1d1612"/>
+          <ellipse cx="48.6" cy="8.2" rx="1.2" ry=".8" fill="#fff" opacity=".6"/>
+          <!-- eyes -->
+          <circle cx="43" cy="27" r="2.2" fill="#1d1612"/><circle cx="57" cy="27" r="2.2" fill="#1d1612"/>
+          <circle cx="43.8" cy="26.3" r=".7" fill="#fff"/><circle cx="57.8" cy="26.3" r=".7" fill="#fff"/>
+        </g>
+      </g>
+    </svg></div>
+  </div>
+  <div id="bubble">
+    <div class="face"><svg viewBox="0 0 100 100"><use href="#poppyFace"/></svg></div>
+    <div class="text" id="say">Where are the treats? Tap the garden and I'll go sniff!</div>
+  </div>
+  <div id="legend"></div>
+  <div id="controls">
+    <button class="btn secondary small" id="noseBtn2">Nose</button>
+    <button class="btn secondary small" id="restartBtn">New garden</button>
+    <button class="btn secondary small" id="quitBtn">Levels</button>
+  </div>
+  <footer><a href="https://steffenhuck.github.io/">steffen huck</a></footer>
+</div>
+
+<script>
+/*ENGINE-START*/
+// ---------- pure game engine (no DOM) ----------
+const LEVELS = {
+  easy:   {n:6,  treats:1, budget:12, stars:[4,7],   name:'Puppy'},
+  medium: {n:8,  treats:2, budget:16, stars:[8,12],  name:'Young Dog'},
+  hard:   {n:10, treats:3, budget:18, stars:[12,15], name:'Top Dog'}
+};
+const LEVEL_ORDER = ['easy','medium','hard'];
+
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+// 4 = treat on one of the 8 surrounding squares, 3 = two away, 2 = three away, 1 = four away, 0 = nothing
+function scentLevel(d){
+  if (d < 1.5) return 4;
+  if (d < 2.5) return 3;
+  if (d < 3.5) return 2;
+  if (d < 4.5) return 1;
+  return 0;
+}
+const MIN_SEP = 4; // treats never closer than this to each other
+function dist(ax,ay,bx,by){ return Math.hypot(ax-bx, ay-by); }
+
+function makeGame(levelKey, seed){
+  const L = LEVELS[levelKey];
+  const rnd = mulberry32(seed);
+  const n = L.n;
+  const sources = [];
+  // place treats well apart; restart the layout if a draw gets stuck
+  for (let attempt = 0; attempt < 500 && sources.length < L.treats; attempt++){
+    sources.length = 0;
+    for (let i = 0; i < L.treats; i++){
+      let ok = false;
+      for (let t = 0; t < 60 && !ok; t++){
+        const x = Math.floor(rnd()*n), y = Math.floor(rnd()*n);
+        if (sources.every(s => dist(s.x,s.y,x,y) >= MIN_SEP)){ sources.push({x,y,alive:true}); ok = true; }
+      }
+      if (!ok) break;
+    }
+  }
+  // decorations (purely visual)
+  const decos = [];
+  const kinds = ['daisy','tulip','mushroom','daisy'];
+  const nd = Math.round(n*n*0.09);
+  let guard = 0;
+  while (decos.length < nd && guard++ < 500){
+    const x = Math.floor(rnd()*n), y = Math.floor(rnd()*n);
+    if (!decos.some(d => d.x===x && d.y===y)) decos.push({x,y,kind:kinds[Math.floor(rnd()*kinds.length)]});
+  }
+  const g = {
+    level: levelKey, L, n, seed, rnd, sources, decos,
+    sniffs: 0, epoch: 0, readings: {}, found: 0,
+    poppy: {x: Math.floor(n/2), y: n-1}, over: false, won: false
+  };
+  return g;
+}
+// the nose goes by the nearest treat still in the garden
+function readingAt(g, x, y){
+  let s = 0;
+  for (const src of g.sources){
+    if (!src.alive) continue;
+    s = Math.max(s, scentLevel(dist(x, y, src.x, src.y)));
+  }
+  return s;
+}
+// returns an event describing what happened
+function sniff(g, x, y){
+  if (g.over) return {type:'over'};
+  g.sniffs++;
+  let ev;
+  const src = g.sources.find(s => s.alive && s.x===x && s.y===y);
+  if (src){
+    src.alive = false; g.epoch++; g.found++;
+    ev = {type:'treat', x, y};
+    delete g.readings[x+','+y];
+  } else {
+    const v = readingAt(g, x, y);
+    g.readings[x+','+y] = {v, epoch: g.epoch};
+    ev = {type:'reading', x, y, v};
+  }
+  if (g.found === g.L.treats){ g.over = true; g.won = true; ev.won = true; }
+  else if (g.sniffs >= g.L.budget){ g.over = true; ev.lost = true; }
+  return ev;
+}
+function starsFor(g){
+  if (!g.won) return 0;
+  if (g.sniffs <= g.L.stars[0]) return 3;
+  if (g.sniffs <= g.L.stars[1]) return 2;
+  return 1;
+}
+/*ENGINE-END*/
+
+// ---------- UI ----------
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const landing = $('landing'), ending = $('ending'), nosePanel = $('nosePanel'), gameEl = $('game');
+  const gardenEl = $('garden'), wrapEl = $('gardenWrap'), poppyEl = $('poppy'), sayEl = $('say');
+  let g = null, mode = 'daily', locked = false, tiles = [], lastLevel = 'easy';
+  let poppyAngle = 0;
+
+  // ----- seeds -----
+  function dailySeed(levelKey){
+    const d = new Date();
+    const s = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+    return (s * 31 + LEVEL_ORDER.indexOf(levelKey) * 7919) >>> 0;
+  }
+  function randomSeed(){ return (Math.random()*4294967295) >>> 0; }
+  function gardenLabel(){
+    const d = new Date();
+    if (mode === 'daily') return 'garden of ' + d.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+    return 'garden #' + (g.seed % 100000);
+  }
+
+  // ----- legend / nose grid -----
+  const WORDS = ['cold','faint','warm','warmer','hot'];
+  function buildLegend(){
+    let html = '';
+    for (let v=0; v<=4; v++) html += `<span class="sw s${v}">${WORDS[v]}</span>`;
+    $('legend').innerHTML = html;
+  }
+  function buildNoseGrid(){
+    const ng = $('noseGrid'); const m = 11, c = 5;
+    ng.setAttribute('aria-hidden','true');
+    ng.style.gridTemplateColumns = `repeat(${m},1fr)`;
+    let html = '';
+    for (let y=0;y<m;y++) for (let x=0;x<m;x++){
+      if (x===c && y===c){ html += '<span class="center"><svg viewBox="0 0 100 100"><use href="#treat"/></svg></span>'; continue; }
+      const v = scentLevel(dist(x,y,c,c));
+      html += `<span class="s${v}"></span>`;
+    }
+    ng.innerHTML = html;
+  }
+  buildNoseGrid();
+
+  // ----- garden -----
+  function buildGarden(){
+    gardenEl.innerHTML = '';
+    gardenEl.style.gridTemplateColumns = `repeat(${g.n},1fr)`;
+    tiles = [];
+    for (let y=0;y<g.n;y++){
+      tiles[y] = [];
+      for (let x=0;x<g.n;x++){
+        const b = document.createElement('button');
+        b.className = 'tile focusable' + (((x+y)%2) ? ' alt' : '');
+        b.setAttribute('aria-label', `garden square ${x+1}, ${y+1}`);
+        const deco = g.decos.find(d => d.x===x && d.y===y);
+        if (deco) b.innerHTML = `<svg class="deco" viewBox="0 0 100 100"><use href="#${deco.kind}"/></svg>`;
+        b.addEventListener('click', () => onTap(x,y));
+        gardenEl.appendChild(b);
+        tiles[y][x] = b;
+      }
+    }
+    requestAnimationFrame(() => placePoppy(g.poppy.x, g.poppy.y, true));
+  }
+  function tileCenter(x,y){
+    const r = gardenEl.getBoundingClientRect(), w = wrapEl.getBoundingClientRect();
+    const cell = r.width / g.n;
+    return {cx: r.left - w.left + (x+.5)*cell, cy: r.top - w.top + (y+.5)*cell, cell};
+  }
+  function placePoppy(x,y,instant){
+    const {cx,cy,cell} = tileCenter(x,y);
+    const size = Math.min(72, Math.max(30, cell*1.12));
+    poppyEl.style.width = poppyEl.style.height = size + 'px';
+    if (instant) poppyEl.style.transition = 'none';
+    // she stops just short of the square, nose on it, body trailing behind
+    const a = poppyAngle * Math.PI/180, back = cell*0.5;
+    const ox = -Math.sin(a)*back, oy = Math.cos(a)*back;
+    poppyEl.style.transform = `translate(${cx - size/2 + ox}px, ${cy - size/2 + oy}px)`;
+    if (instant){ void poppyEl.offsetWidth; poppyEl.style.transition = ''; }
+  }
+  function facePoppy(fromX,fromY,toX,toY){
+    const dx = toX-fromX, dy = toY-fromY;
+    if (!dx && !dy) return;
+    let target = Math.atan2(dx, -dy) * 180/Math.PI; // 0 = up
+    // choose the equivalent angle closest to the current one, so she turns the short way
+    while (target - poppyAngle > 180) target -= 360;
+    while (target - poppyAngle < -180) target += 360;
+    poppyAngle = target;
+    poppyEl.querySelector('.rot').style.transform = `rotate(${poppyAngle}deg)`;
+  }
+  function renderTile(x,y){
+    const b = tiles[y][x];
+    const src = g.sources.find(s => s.x===x && s.y===y && !s.alive);
+    b.classList.remove('read','s0','s1','s2','s3','s4','found');
+    b.querySelectorAll('.item').forEach(e => e.remove());
+    if (src){
+      b.classList.add('found');
+      b.insertAdjacentHTML('beforeend', `<svg class="item" viewBox="0 0 100 100"><use href="#treat"/></svg>`);
+      b.setAttribute('aria-label', 'treat found here');
+      return;
+    }
+    const r = g.readings[x+','+y];
+    if (!r) return;
+    b.classList.add('read', 's' + r.v);
+    b.setAttribute('aria-label', WORDS[r.v]);
+  }
+  function renderAll(){ for (let y=0;y<g.n;y++) for (let x=0;x<g.n;x++) renderTile(x,y); }
+  function updateHud(){
+    $('treatsVal').textContent = `${g.found}/${g.L.treats}`;
+    const left = g.L.budget - g.sniffs;
+    $('sniffsVal').textContent = left;
+    $('sniffChip').classList.toggle('warn', left <= 3);
+  }
+  function say(html){ sayEl.innerHTML = html; }
+
+  const LINES = {
+    0: ['Nothing here. Just grass.', 'Cold. Not even a whiff.', 'Hmm. Dirt. Grass. Boring.'],
+    1: ['A tiny whiff of something, far away.', 'Faint. Very faint.', 'I think I smell... something?'],
+    2: ['Something! Not close, but something.', 'Yes! It\'s around here somewhere.', 'My tail is starting to wag.'],
+    3: ['Oooh, close! Very close!', 'Two squares away, says my nose.', 'My tail is wagging properly now.'],
+    4: ['It\'s on one of the squares touching mine!', 'Hot! Straight or diagonal, I can\'t tell.', 'So close I can almost touch it!']
+  };
+  const TITLES = ['Cold', 'Faint', 'Warm', 'Warmer', 'Hot!'];
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  function float(x,y,text){
+    const {cx,cy} = tileCenter(x,y);
+    const f = document.createElement('div'); f.className = 'float'; f.textContent = text;
+    f.style.left = cx+'px'; f.style.top = cy+'px'; wrapEl.appendChild(f);
+    setTimeout(() => f.remove(), 1200);
+    for (let i=0;i<6;i++){
+      const s = document.createElement('div'); s.className = 'sparkle'; s.textContent = pick(['✨','⭐','💛','🦴']);
+      s.style.left = (cx - 26 + Math.random()*52)+'px'; s.style.top = (cy - 10 + Math.random()*20)+'px';
+      s.style.animationDelay = (Math.random()*.4)+'s'; wrapEl.appendChild(s);
+      setTimeout(() => s.remove(), 2400);
+    }
+  }
+  function confetti(){
+    const cols = ['#ff7a59','#ffd43b','#69db7c','#4dabf7','#da77f2','#fff'];
+    for (let i=0;i<70;i++){
+      const c = document.createElement('div'); c.className = 'confetti';
+      c.style.left = Math.random()*100+'vw'; c.style.background = cols[i%cols.length];
+      c.style.animationDuration = (2.2+Math.random()*1.8)+'s'; c.style.animationDelay = (Math.random()*1.2)+'s';
+      document.body.appendChild(c); setTimeout(() => c.remove(), 4500);
+    }
+  }
+
+  // ----- game flow -----
+  function start(levelKey){
+    lastLevel = levelKey;
+    const seed = mode === 'daily' ? dailySeed(levelKey) : randomSeed();
+    g = makeGame(levelKey, seed);
+    poppyAngle = 0; poppyEl.querySelector('.rot').style.transform = '';
+    poppyEl.className = '';
+    $('levelName').textContent = g.L.name + ' · ' + (mode === 'daily' ? new Date().toLocaleDateString(undefined,{day:'numeric',month:'short'}) : '#' + (g.seed % 100000));
+    landing.style.display = 'none'; ending.style.display = 'none';
+    gameEl.style.display = 'flex';
+    buildGarden(); buildLegend(); updateHud(); locked = false;
+    const intro = {
+      easy: 'One treat somewhere in the garden, and I have <b>' + g.L.budget + ' sniffs</b>. Tap a square and I\'ll run and sniff!',
+      medium: 'Two treats this time, and <b>' + g.L.budget + ' sniffs</b>. My nose always goes by the nearest one. Tap a square!',
+      hard: 'Three treats, a big garden, only <b>' + g.L.budget + ' sniffs</b>. Think before you tap!'
+    }[levelKey];
+    say(intro);
+  }
+  function onTap(x,y){
+    if (locked || !g || g.over) return;
+    locked = true;
+    const from = {...g.poppy};
+    facePoppy(from.x, from.y, x, y);
+    g.poppy = {x,y};
+    const d = dist(from.x,from.y,x,y);
+    const travel = 180 + Math.min(600, d*90);
+    poppyEl.style.transitionDuration = travel + 'ms';
+    placePoppy(x,y,false);
+    setTimeout(() => {
+      poppyEl.classList.add('sniffing');
+      say('<i>sniff sniff sniff…</i>');
+      setTimeout(() => {
+        poppyEl.classList.remove('sniffing');
+        resolve(x,y);
+      }, 700);
+    }, travel);
+  }
+  function resolve(x,y){
+    const ev = sniff(g, x, y);
+    renderAll(); updateHud();
+    if (ev.type === 'treat'){
+      float(x,y,'FOUND IT!'); poppyEl.classList.add('happy'); setTimeout(() => poppyEl.classList.remove('happy'), 1200);
+      if (navigator.vibrate) navigator.vibrate(40);
+      const left = g.L.treats - g.found;
+      say(left ? `<b>A treat!</b> Nom nom nom. ${left === 1 ? 'One more' : left + ' more'} to go!` : '<b>Got them all!</b> Best. Day. Ever.');
+    } else {
+      const v = ev.v;
+      say(`<b>${TITLES[v]}</b>&nbsp;&nbsp;${pick(LINES[v])}`);
+    }
+    if (g.over){
+      setTimeout(() => finish(), ev.won ? 900 : 700);
+    } else locked = false;
+  }
+  function finish(){
+    const stars = starsFor(g);
+    if (g.won){
+      const one = g.L.treats === 1;
+      $('endTitle').textContent = stars === 3 ? (one ? 'Poppy found the treat — fast!' : 'Poppy found every treat — fast!') : (one ? 'Poppy found the treat!' : 'Poppy found all the treats!');
+      $('endStars').innerHTML = [1,2,3].map(i => `<span class="${i<=stars?'':'off'}">⭐</span>`).join('');
+      $('endStats').innerHTML = `${g.L.treats === 1 ? 'The treat' : 'All ' + g.L.treats + ' treats'} in <b>${g.sniffs}</b> sniff${g.sniffs===1?'':'s'}.` +
+        (stars < 3 ? `<br><span style="color:var(--muted);font-size:14px">Three stars: ${g.L.stars[0]} sniffs or fewer.</span>` : '');
+      confetti();
+    } else {
+      $('endTitle').textContent = 'Poppy is tired. Zzz…';
+      $('endStars').innerHTML = '';
+      $('endStats').innerHTML = `She found ${g.found} of ${g.L.treats} treat${g.L.treats===1?'':'s'}, then fell asleep in the sun. The rest are now showing in the garden.`;
+      say('Zzz… <i>(Poppy is asleep. The treats she missed are showing.)</i>');
+      poppyEl.classList.add('sleepy');
+      for (const s of g.sources) if (s.alive){
+        const b = tiles[s.y][s.x]; b.classList.add('reveal');
+        b.insertAdjacentHTML('beforeend', `<svg class="item" viewBox="0 0 100 100"><use href="#treat"/></svg>`);
+      }
+    }
+    $('endGarden').textContent = g.L.name + ' · ' + gardenLabel();
+    const idx = LEVEL_ORDER.indexOf(g.level);
+    $('nextBtn').style.display = (g.won && idx < LEVEL_ORDER.length-1) ? '' : 'none';
+    $('shareBtn').style.display = g.won ? '' : 'none';
+    $('peekBtn').style.display = g.won ? 'none' : '';
+    ending.style.display = 'flex';
+  }
+
+  // ----- buttons -----
+  document.querySelectorAll('.lvl').forEach(b => b.addEventListener('click', () => start(b.dataset.level)));
+  document.querySelectorAll('#modeToggle button').forEach(b => b.addEventListener('click', () => {
+    mode = b.dataset.mode;
+    document.querySelectorAll('#modeToggle button').forEach(x => x.classList.toggle('on', x===b));
+    $('modeNote').textContent = mode === 'daily' ? 'Today\'s garden is the same for everyone. Compare sniffs with a friend.' : 'A fresh garden every time.';
+  }));
+  $('againBtn').addEventListener('click', () => start(g.level));
+  $('nextBtn').addEventListener('click', () => start(LEVEL_ORDER[LEVEL_ORDER.indexOf(g.level)+1]));
+  $('peekBtn').addEventListener('click', () => { ending.style.display='none'; });
+  $('menuBtn').addEventListener('click', () => { ending.style.display='none'; gameEl.style.display='none'; landing.style.display='flex'; });
+  $('quitBtn').addEventListener('click', () => { gameEl.style.display='none'; landing.style.display='flex'; });
+  $('restartBtn').addEventListener('click', () => { if (mode === 'daily'){ mode = 'random'; document.querySelectorAll('#modeToggle button').forEach(x => x.classList.toggle('on', x.dataset.mode==='random')); } start(g.level); });
+  const openNose = () => nosePanel.style.display = 'flex';
+  $('noseBtn1').addEventListener('click', openNose);
+  $('noseBtn2').addEventListener('click', openNose);
+  $('noseClose').addEventListener('click', () => nosePanel.style.display = 'none');
+  $('shareBtn').addEventListener('click', async () => {
+    const stars = '⭐'.repeat(starsFor(g));
+    const text = `Find the Treat 🐕 ${g.L.name}: Poppy found ${g.L.treats === 1 ? 'the treat' : 'all ' + g.L.treats + ' treats'} in ${g.sniffs} sniffs ${stars} (${gardenLabel()})\n${location.href.split('#')[0]}`;
+    try {
+      if (navigator.share) await navigator.share({text});
+      else { await navigator.clipboard.writeText(text); $('shareBtn').textContent = 'Copied!'; setTimeout(() => $('shareBtn').textContent = 'Share', 1500); }
+    } catch(e){}
+  });
+  window.addEventListener('resize', () => { if (g && gameEl.style.display !== 'none') placePoppy(g.poppy.x, g.poppy.y, true); });
+})();
+</script>
+</body>
+</html>
